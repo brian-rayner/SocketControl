@@ -12,5 +12,5 @@ the charger.
 The charging cable I am currently using is a simple 'granny' cable with a standard 13A plug
 which is plugged into a BG Electrical BG 900 wall socket in the garage to smartify it.
 The BG 900 has a direct API allowing it to be controlled through a WiFi router without
-the need of cloud-based services.  The API is accessed through the Broadlink Python library 
+the need for cloud-based services.  The API is accessed through the Broadlink Python library 
 to be found here: https://github.com/mjg59/python-broadlink
