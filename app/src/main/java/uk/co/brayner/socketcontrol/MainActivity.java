@@ -3,8 +3,6 @@ package uk.co.brayner.socketcontrol;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.chaquo.python.PyObject;
-import com.chaquo.python.Python;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,6 +14,10 @@ import androidx.navigation.ui.NavigationUI;
 public class MainActivity extends AppCompatActivity
 {
   static String TAG = "MainActivity";
+
+  static String host = "192.168.1.17";          // IP address of device on local network
+
+  Socket socket;
 
   @Override
   protected void onCreate(Bundle savedInstanceState)
@@ -32,27 +34,10 @@ public class MainActivity extends AppCompatActivity
     NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
     NavigationUI.setupWithNavController(navView, navController);
 
-    try
-    {
-      Python python = Python.getInstance();
-      PyObject broadlink = python.getModule("broadlink");
-
-      // Just to check we are talking to the Python module OK
-
-      PyObject obj = broadlink.callAttr("test");
-      Log.d(TAG, "test result: " + obj.toString());
-
-      // This is it: retrieve list of compatible devices on network
-
-      obj = broadlink.callAttr("discover");
-      Log.d(TAG, "discover result: " + obj.toString());
-
-      // TODO - retrieve details of the BG800 / BG900 smart wall socket
-    }
-    catch (Exception ex)
-    {
-      Log.d(TAG, "Something went wrong: " + ex.toString());
-    }
+    socket = Socket.getInstance();
+    if (socket.connect(host))
+      Log.d(TAG, "We're in!");
+    else
+      Log.d(TAG, "Oops, something went wrong");
   }
-
 }
