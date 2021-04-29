@@ -2,5 +2,50 @@
     <string name="app_name">Socket Control</string>
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
+    <string name="title_settings">Settings</string>
+
+    <!-- Preference Titles -->
+    <string name="octopus_header">Octopus Energy</string>
+    <string name="socket_header">Smart socket</string>
+    <string name="car_header">Vehicle</string>
+
+    <!-- Octopus Preferences -->
+    <string name="mpan_title">Meter MPAN</string>
+    <string name="sn_title">Meter serial number</string>
+    <string name="api_key_title">API key</string>
+    <string name="region_title">Region</string>
+    <string name="tariff_title">Tariff</string>
+    <string name="go_duration_title">GO low tariff duration</string>
+    <string name="go_start_title">GO low tariff start time</string>
+
+    <!-- Socket Preferences -->
+    <string name="ip_title">IP address</string>
+    <string name="outlet_title">Outlet</string>
+
+    <!-- Car Preferences -->
+    <string name="mpkwh_title">Miles per kWh</string>
+
+
+    <string name="capacity_title">Maximum capacity (kWh)</string>
+    <string name="add_miles">Add miles</string>
+    <string name="add_kwh">Add kWh</string>
+    <string name="to_full">To full</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="charge_level">Charge level</string>
+    <string name="miles">Miles</string>
+    <string name="max_price">Price below</string>
+    <string name="always_on">Always on</string>
+    <string name="price">Price</string>
+    <string name="p_kwh">p/kWh</string>
+    <string name="charge_when">Charge when</string>
+    <string name="add">Add</string>
+    <string name="any_time">Any time</string>
+    <string name="kwh">kWh</string>
+    <string name="charging">Charging</string>
+    <string name="not_charging">Not charging</string>
+    <string name="off">Off</string>
+    <string name="on">On</string>
+    <string name="until">until</string>
+
 </resources>
