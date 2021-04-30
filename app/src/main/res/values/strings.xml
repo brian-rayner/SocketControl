@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Socket Control</string>
     <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
+    <string name="title_schedule">Schedule</string>
     <string name="title_settings">Settings</string>
 
     <!-- Preference Titles -->
@@ -28,7 +28,7 @@
 
     <string name="capacity_title">Maximum capacity (kWh)</string>
     <string name="add_miles">Add miles</string>
-    <string name="add_kwh">Add kWh</string>
+    <string name="add_charge">Add charge</string>
     <string name="to_full">To full</string>
     <string name="start">Start</string>
     <string name="stop">Stop</string>

@@ -6,14 +6,12 @@ import com.chaquo.python.Kwarg;
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 
-import java.util.Map;
 
-
-public class Socket
+public class WallSocket
 {
   static String TAG = "Socket";
 
-  private static Socket theInstance = null;
+  private static WallSocket theInstance = null;
   private Python python;
   private PyObject broadlink;
   private PyObject device;
@@ -37,7 +35,7 @@ public class Socket
     int brightness;
   }
 
-  private Socket ()
+  private WallSocket()
   {
     try
     {
@@ -51,10 +49,10 @@ public class Socket
     }
   }
 
-  public static Socket getInstance ()
+  public static WallSocket getInstance ()
   {
     if (theInstance == null)
-      theInstance = new Socket();
+      theInstance = new WallSocket();
     return theInstance;
   }
 

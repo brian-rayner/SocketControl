@@ -9,13 +9,13 @@
         android:id="@+id/navigation_home"
         android:name="uk.co.brayner.socketcontrol.ui.home.HomeFragment"
         android:label="@string/title_home"
-        tools:layout="@layout/fragment_home" />
+        tools:layout="@layout/fragment_schedule" />
 
     <fragment
-        android:id="@+id/navigation_dashboard"
-        android:name="uk.co.brayner.socketcontrol.ui.dashboard.DashboardFragment"
-        android:label="@string/title_dashboard"
-        tools:layout="@layout/fragment_dashboard" />
+        android:id="@+id/navigation_schedule"
+        android:name="uk.co.brayner.socketcontrol.ui.schedule.ScheduleFragment"
+        android:label="@string/title_schedule"
+        tools:layout="@layout/fragment_home" />
 
     <fragment
         android:id="@+id/navigation_settings"

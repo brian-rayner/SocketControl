@@ -1,97 +1,48 @@
 package uk.co.brayner.socketcontrol.ui.home;
 
-import android.app.Application;
-import android.content.SharedPreferences;
-import android.content.res.Resources;
-import android.util.Log;
-
-import androidx.annotation.NonNull;
-import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-import androidx.preference.Preference;
-import androidx.preference.PreferenceManager;
-import uk.co.brayner.socketcontrol.MainActivity;
-import uk.co.brayner.socketcontrol.R;
-import uk.co.brayner.socketcontrol.Socket;
+import uk.co.brayner.socketcontrol.WallSocket;
 
-public class HomeViewModel extends AndroidViewModel
+public class HomeViewModel extends ViewModel
 {
-  public enum ChargeFor
+  WallSocket wallSocket = WallSocket.getInstance();
+  WallSocket.State state;
+
+  private MutableLiveData<Boolean> left;
+  private MutableLiveData<Boolean> right;
+
+  public HomeViewModel()
   {
-    TO_FULL,
-    ADD_MILES,
-    ADD_KWH
+    left = new MutableLiveData<>();
+    right = new MutableLiveData<>();
+
+    state = wallSocket.getState();
+    left.setValue(state.powerLeft);
+    right.setValue(state.powerRight);
   }
 
-  public enum ChargeWhen
+  public LiveData<Boolean> getLeft()
   {
-    ANY_TIME,
-    MAX_PRICE
+    return left;
+  }
+  public LiveData<Boolean> getRight()
+  {
+    return right;
   }
 
-  private SharedPreferences prefs;
-  private MutableLiveData<ChargeFor> chargeFor;
-  private MutableLiveData<ChargeWhen> chargeWhen;
-  private MutableLiveData<Boolean> charging;
-  private MutableLiveData<Boolean> chargerOn;
-
-  public HomeViewModel(@NonNull Application application)
+  public void toggleLeft ()
   {
-    super(application);
-    prefs = PreferenceManager.getDefaultSharedPreferences(application);
-
-    charging = new MutableLiveData<>();
-    charging.setValue(false);
-
-    chargerOn = new MutableLiveData<>();
-    chargerOn.setValue(false);
-
-    chargeFor = new MutableLiveData<>();
-    chargeFor.setValue(ChargeFor.values()[prefs.getInt("ChargeFor", 0)]);
-
-    chargeWhen = new MutableLiveData<>();
-    chargeWhen.setValue(ChargeWhen.values()[prefs.getInt("ChargeWhen", 0)]);
+    state = wallSocket.powerOn(WallSocket.ID.LEFT, !left.getValue());
+    left.setValue(state.powerLeft);
+    right.setValue(state.powerRight);
   }
 
-  public LiveData<Boolean> getCharging()  { return charging;  }
-  public LiveData<Boolean> getChargerOn()  { return chargerOn;  }
-  public LiveData<ChargeFor> getChargeFor() { return chargeFor; }
-  public LiveData<ChargeWhen> getChargeWhen() { return chargeWhen; }
-
-  public void setChargeFor (ChargeFor chargeFor)
+  public void toggleRight ()
   {
-    this.chargeFor.setValue(chargeFor);
-    SharedPreferences.Editor editor = prefs.edit();
-    editor.putInt("ChargeFor", chargeFor.ordinal());
-    editor.apply();
-  }
-
-  public void setChargeWhen (ChargeWhen chargeWhen)
-  {
-    this.chargeWhen.setValue(chargeWhen);
-    SharedPreferences.Editor editor = prefs.edit();
-    editor.putInt("ChargeWhen", chargeWhen.ordinal());
-    editor.apply();
-  }
-
-  public void startStop ()
-  {
-    Socket socket = Socket.getInstance();
-    Socket.State state;
-
-    if (charging.getValue())
-    {
-      state = socket.powerOn(Socket.ID.LEFT, false);
-      chargerOn.setValue(state.powerLeft);
-      charging.setValue(false);
-    }
-    else
-    {
-      state = socket.powerOn(Socket.ID.LEFT, true);
-      chargerOn.setValue(state.powerLeft);
-      charging.setValue(true);
-    }
+    state = wallSocket.powerOn(WallSocket.ID.RIGHT, !right.getValue());
+    left.setValue(state.powerLeft);
+    right.setValue(state.powerRight);
   }
 }

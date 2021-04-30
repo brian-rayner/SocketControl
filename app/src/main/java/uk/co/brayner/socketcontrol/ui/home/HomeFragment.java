@@ -5,186 +5,74 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.RadioButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import uk.co.brayner.socketcontrol.R;
 
 public class HomeFragment extends Fragment
 {
+
   private HomeViewModel homeViewModel;
+
+  ImageView ivLeft;
+  ImageView ivRight;
 
   public View onCreateView(@NonNull LayoutInflater inflater,
                            ViewGroup container, Bundle savedInstanceState)
   {
-    homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
+    homeViewModel =
+            new ViewModelProvider(this).get(HomeViewModel.class);
     View root = inflater.inflate(R.layout.fragment_home, container, false);
 
-    TextView twState = root.findViewById(R.id.twState);
-    TextView twAdd = root.findViewById(R.id.twAdd);
-    EditText etAdd = root.findViewById(R.id.etAdd);
-    TextView twUnits = root.findViewById(R.id.twUnits);
-    TextView twPrice = root.findViewById(R.id.twPrice);
-    EditText etPrice = root.findViewById(R.id.etPrice);
-    TextView twPriceUnits = root.findViewById(R.id.twPriceUnits);
-    TextView twChargerOn = root.findViewById(R.id.twChargerOn);
+    ivLeft = root.findViewById(R.id.ivLeft);
+    ivRight = root.findViewById(R.id.ivRight);
 
-    RadioButton rbAddMiles = root.findViewById(R.id.rbAddMiles);
-    RadioButton rbAddKWH = root.findViewById(R.id.rbAddKWH);
-    RadioButton rbToFull = root.findViewById(R.id.rbToFull);
-    RadioButton rbPrice = root.findViewById(R.id.rbPrice);
-    RadioButton rbAlways = root.findViewById(R.id.rbAlways);
+    ivLeft.setOnClickListener(view -> { onClickLeft (); });
+    ivRight.setOnClickListener(view -> { onClickRight (); });
 
-    Button btnStart = root.findViewById(R.id.btnStart);
+    // Add observers for any changes to the underlying viewmodel
 
-    switch (homeViewModel.getChargeFor().getValue())
-    {
-      case TO_FULL:   rbToFull.setChecked(true);    break;
-      case ADD_MILES: rbAddMiles.setChecked(true);  break;
-      case ADD_KWH:   rbAddKWH.setChecked(true);    break;
-    }
-
-    switch (homeViewModel.getChargeWhen().getValue())
-    {
-      case ANY_TIME:  rbAlways.setChecked(true);  break;
-      case MAX_PRICE: rbPrice.setChecked(true);   break;
-    }
-
-    rbAddMiles.setOnClickListener(view -> { onClickAddMiles (); });
-    rbAddKWH.setOnClickListener(view -> { onClickAddKWH (); });
-    rbToFull.setOnClickListener(view -> { onClickToFull (); });
-    rbPrice.setOnClickListener(view -> { onClickPrice (); });
-    rbAlways.setOnClickListener(view -> { onClickAnyTime (); });
-    btnStart.setOnClickListener(view -> { onClickStart (); });
-
-    homeViewModel.getCharging().observe(getViewLifecycleOwner(), new Observer<Boolean>()
+    homeViewModel.getLeft().observe(getViewLifecycleOwner(), new Observer<Boolean>()
     {
       @Override
-      public void onChanged(@Nullable Boolean charging)
+      public void onChanged(@Nullable Boolean on)
       {
-        if (charging)
-        {
-          twState.setText(R.string.charging);
-          twState.setBackgroundColor(Color.parseColor("#8BC34A"));
-          btnStart.setText(R.string.stop);
-
-        }
+        if (on)
+          ivLeft.setImageResource(R.drawable.power_on);
         else
-        {
-          twState.setText(R.string.not_charging);
-          twState.setBackgroundColor(Color.parseColor("#FF9800"));
-          btnStart.setText(R.string.start);
-        }
+          ivLeft.setImageResource(R.drawable.power_off);
       }
     });
 
-    homeViewModel.getChargerOn().observe(getViewLifecycleOwner(), new Observer<Boolean>()
+    homeViewModel.getRight().observe(getViewLifecycleOwner(), new Observer<Boolean>()
     {
       @Override
-      public void onChanged(@Nullable Boolean chargerOn)
+      public void onChanged(@Nullable Boolean on)
       {
-        if (chargerOn)
-        {
-          twChargerOn.setText(R.string.on);
-          twChargerOn.setBackgroundColor(Color.parseColor("#8BC34A"));
-        }
+        if (on)
+          ivRight.setImageResource(R.drawable.power_on);
         else
-        {
-          twChargerOn.setText(R.string.off);
-          twChargerOn.setBackgroundColor(Color.parseColor("#FF9800"));
-        }
-      }
-    });
-
-    homeViewModel.getChargeFor().observe(getViewLifecycleOwner(), new Observer<HomeViewModel.ChargeFor>()
-    {
-      @Override
-      public void onChanged(@Nullable HomeViewModel.ChargeFor chargeFor)
-      {
-        switch (chargeFor)
-        {
-          case TO_FULL:
-            twAdd.setVisibility(View.INVISIBLE);
-            etAdd.setVisibility(View.INVISIBLE);
-            twUnits.setVisibility(View.INVISIBLE);
-            break;
-
-          case ADD_MILES:
-            twAdd.setVisibility(View.VISIBLE);
-            etAdd.setVisibility(View.VISIBLE);
-            twUnits.setVisibility(View.VISIBLE);
-            twUnits.setText(R.string.miles);
-            break;
-
-          case ADD_KWH:
-            twAdd.setVisibility(View.VISIBLE);
-            etAdd.setVisibility(View.VISIBLE);
-            twUnits.setVisibility(View.VISIBLE);
-            twUnits.setText(R.string.kwh);
-            break;
-        }
-      }
-    });
-
-    homeViewModel.getChargeWhen().observe(getViewLifecycleOwner(), new Observer<HomeViewModel.ChargeWhen>()
-    {
-      @Override
-      public void onChanged(@Nullable HomeViewModel.ChargeWhen chargeWhen)
-      {
-        switch (chargeWhen)
-        {
-          case MAX_PRICE:
-            twPrice.setVisibility(View.VISIBLE);
-            etPrice.setVisibility(View.VISIBLE);
-            twPriceUnits.setVisibility(View.VISIBLE);
-            break;
-
-          case ANY_TIME:
-            twPrice.setVisibility(View.INVISIBLE);
-            etPrice.setVisibility(View.INVISIBLE);
-            twPriceUnits.setVisibility(View.INVISIBLE);
-            break;
-        }
+          ivRight.setImageResource(R.drawable.power_off);
       }
     });
 
     return root;
   }
 
-  private void onClickAddMiles ()
+  private void onClickLeft ()
   {
-    homeViewModel.setChargeFor(HomeViewModel.ChargeFor.ADD_MILES);
+    homeViewModel.toggleLeft();
   }
 
-  private void onClickAddKWH ()
+  private void onClickRight ()
   {
-    homeViewModel.setChargeFor(HomeViewModel.ChargeFor.ADD_KWH);
-  }
-
-  private void onClickToFull ()
-  {
-    homeViewModel.setChargeFor(HomeViewModel.ChargeFor.TO_FULL);
-  }
-
-  private void onClickPrice ()
-  {
-    homeViewModel.setChargeWhen(HomeViewModel.ChargeWhen.MAX_PRICE);
-  }
-
-  private void onClickAnyTime ()
-  {
-    homeViewModel.setChargeWhen(HomeViewModel.ChargeWhen.ANY_TIME);
-  }
-
-  private void onClickStart ()
-  {
-    homeViewModel.startStop ();
+    homeViewModel.toggleRight();
   }
 }
