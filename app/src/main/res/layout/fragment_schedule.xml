@@ -144,6 +144,14 @@
             tools:layout_editor_absoluteY="501dp" />
 
         <RadioButton
+            android:id="@+id/rbOffPeak"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Off-peak"
+            tools:layout_editor_absoluteX="266dp"
+            tools:layout_editor_absoluteY="236dp" />
+
+        <RadioButton
             android:id="@+id/rbAnyTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

@@ -6,13 +6,11 @@ import com.chaquo.python.Kwarg;
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 
-
 public class WallSocket
 {
   static String TAG = "Socket";
 
   private static WallSocket theInstance = null;
-  private Python python;
   private PyObject broadlink;
   private PyObject device;
   private boolean connected = false;
@@ -24,7 +22,7 @@ public class WallSocket
     RIGHT
   }
 
-  public class State
+  public static class State
   {
     public boolean powerBoth;
     public boolean powerLeft;
@@ -35,28 +33,35 @@ public class WallSocket
     int brightness;
   }
 
-  private WallSocket()
+  //---------------------------------------------------------------------------
+
+  private WallSocket(String host)
   {
     try
     {
       // Create instance of Python and get reference to Broadlink module
 
-      python = Python.getInstance();
+      Python python = Python.getInstance();
       broadlink = python.getModule("broadlink");
+      connect(host);
     }
-    catch (Exception ex)
+    catch (Exception ignored)
     {
     }
   }
 
-  public static WallSocket getInstance ()
+  //---------------------------------------------------------------------------
+
+  public static WallSocket getInstance (String host)
   {
     if (theInstance == null)
-      theInstance = new WallSocket();
+      theInstance = new WallSocket(host);
     return theInstance;
   }
 
-  public boolean connect (String host)
+  //---------------------------------------------------------------------------
+
+  private void connect (String host)
   {
     if (!connected)
     {
@@ -76,8 +81,9 @@ public class WallSocket
         connected = false;
       }
     }
-    return true;
   }
+
+  //---------------------------------------------------------------------------
 
   public State powerOn (ID port, boolean on)
   {
@@ -110,6 +116,8 @@ public class WallSocket
     return null;
   }
 
+  //---------------------------------------------------------------------------
+
   public State setMaxWorkTime (ID port, int time)
   {
     String portString = null;
@@ -135,11 +143,15 @@ public class WallSocket
     return null;
   }
 
+  //---------------------------------------------------------------------------
+
   public void setBrightness (int level)
   {
     if (connected)
       device.callAttr("set_state", new Kwarg ("idcbrightness", level));
   }
+
+  //---------------------------------------------------------------------------
 
   public State getState ()
   {
@@ -157,9 +169,11 @@ public class WallSocket
     return null;
   }
 
+  //---------------------------------------------------------------------------
+
   private State unpackState (PyObject map)
   {
-    State state = new State ();
+    State state = new State();
 
     state.powerBoth = (map.asMap().get("pwr").toInt() == 1);
     state.powerLeft = (map.asMap().get("pwr1").toInt() == 1);

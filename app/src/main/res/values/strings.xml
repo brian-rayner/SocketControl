@@ -46,6 +46,7 @@
     <string name="not_charging">Not charging</string>
     <string name="off">Off</string>
     <string name="on">On</string>
-    <string name="until">until</string>
+    <string name="until">until %s</string>
+    <string name="charging_complete">Charging Complete</string>
 
 </resources>

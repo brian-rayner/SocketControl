@@ -1,20 +1,33 @@
 package uk.co.brayner.socketcontrol.ui.home;
 
+import android.app.Application;
+import android.content.SharedPreferences;
+
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
+import androidx.preference.PreferenceManager;
 import uk.co.brayner.socketcontrol.WallSocket;
 
-public class HomeViewModel extends ViewModel
+public class HomeViewModel extends AndroidViewModel
 {
-  WallSocket wallSocket = WallSocket.getInstance();
+  WallSocket wallSocket;
   WallSocket.State state;
 
-  private MutableLiveData<Boolean> left;
-  private MutableLiveData<Boolean> right;
+  private final MutableLiveData<Boolean> left;
+  private final MutableLiveData<Boolean> right;
 
-  public HomeViewModel()
+  //---------------------------------------------------------------------------
+
+  public HomeViewModel(@NonNull Application application)
   {
+    super(application);
+
+    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(application);
+    String host = prefs.getString("ip", "");
+
+    wallSocket = WallSocket.getInstance(host);
     left = new MutableLiveData<>();
     right = new MutableLiveData<>();
 
@@ -22,6 +35,8 @@ public class HomeViewModel extends ViewModel
     left.setValue(state.powerLeft);
     right.setValue(state.powerRight);
   }
+
+  //---------------------------------------------------------------------------
 
   public LiveData<Boolean> getLeft()
   {
@@ -32,12 +47,16 @@ public class HomeViewModel extends ViewModel
     return right;
   }
 
+  //---------------------------------------------------------------------------
+
   public void toggleLeft ()
   {
     state = wallSocket.powerOn(WallSocket.ID.LEFT, !left.getValue());
     left.setValue(state.powerLeft);
     right.setValue(state.powerRight);
   }
+
+  //---------------------------------------------------------------------------
 
   public void toggleRight ()
   {
