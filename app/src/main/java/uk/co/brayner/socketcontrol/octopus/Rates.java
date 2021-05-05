@@ -3,6 +3,7 @@ package uk.co.brayner.socketcontrol.octopus;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Date;
 import java.util.List;
 
 public class Rates
@@ -30,9 +31,9 @@ public class Rates
     public Double valueIncVat;
     @SerializedName("valid_from")
     @Expose
-    public String validFrom;
+    public Date validFrom;
     @SerializedName("valid_to")
     @Expose
-    public String validTo;
+    public Date validTo;
   }
 }

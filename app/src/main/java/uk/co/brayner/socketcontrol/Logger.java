@@ -1,6 +1,7 @@
 package uk.co.brayner.socketcontrol;
 
 import android.content.Context;
+import android.util.Log;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -23,6 +24,8 @@ public class Logger
 
       Date d = Calendar.getInstance().getTime();
       DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.UK);
+
+      Log.d ("Logger", df.format(d) + ":  " + text);
 
       //BufferedWriter for performance, true to set append to file flag
       BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true));

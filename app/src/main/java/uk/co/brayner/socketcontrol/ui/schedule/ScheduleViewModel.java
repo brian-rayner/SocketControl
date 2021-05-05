@@ -34,6 +34,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
@@ -44,20 +45,23 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.preference.PreferenceManager;
 import uk.co.brayner.socketcontrol.Logger;
+import uk.co.brayner.socketcontrol.MainActivity;
 import uk.co.brayner.socketcontrol.R;
 import uk.co.brayner.socketcontrol.Scheduler;
+import uk.co.brayner.socketcontrol.Tariff;
 import uk.co.brayner.socketcontrol.WallSocket;
+import uk.co.brayner.socketcontrol.octopus.Rates;
 
-import static java.util.Calendar.DATE;
-import static java.util.Calendar.HOUR;
+import static java.util.Calendar.MILLISECOND;
 import static java.util.Calendar.MINUTE;
+import static java.util.Calendar.SECOND;
 
 public class ScheduleViewModel extends AndroidViewModel
 {
   static String TAG = "HomeViewModel";
   static Float SUPPLY_VOLTAGE = 230.0F;
   static int MILLISECONDS_IN_MINUTE = 60000;
-  static int TIME_MARGIN = 2;
+
   static String CHANNEL_ID = "charging_complete_notification";
 
   public enum State
@@ -81,13 +85,6 @@ public class ScheduleViewModel extends AndroidViewModel
     OFF_PEAK
   }
 
-  enum Action
-  {
-    CHARGER_FINISH,
-    CHARGER_ON,
-    CHARGER_OFF
-  }
-
   private final SharedPreferences prefs;
   private final MutableLiveData<State> state;
   private final MutableLiveData<ChargeFor> chargeFor;
@@ -98,6 +95,8 @@ public class ScheduleViewModel extends AndroidViewModel
   private final MutableLiveData<Integer> priceLimit;
   private final MutableLiveData<Date> nextTime;
   private static ScheduleViewModel theInstance = null;
+
+  Tariff tariff;
 
   //---------------------------------------------------------------------------
 
@@ -273,12 +272,22 @@ public class ScheduleViewModel extends AndroidViewModel
 
   private void startCharging ()
   {
-    // Starts the charging schedule
+    // Starts the charging schedule.  Start by retrieving the current rates
+    // if necessary, then passing control to handleCharging
 
+    tariff = Tariff.getTariff(getApplication());
+    assert tariff != null;
+    tariff.getRates(Calendar.getInstance(), this::handleCharging);
+  }
+
+  //---------------------------------------------------------------------------
+
+  private void handleCharging(Context context, List<Rates.Result> rates)
+  {
     float chargeToAdd = 0.0F;   // How much charge to add
     float power;                // Power supplied by charger
 
-    Logger.log(getApplication(),"--------------------------------------------------");
+    Logger.log(context,"--------------------------------------------------");
 
     try
     {
@@ -287,6 +296,7 @@ public class ScheduleViewModel extends AndroidViewModel
       String sMpkwh = prefs.getString("mpkwh", "2");
       String sCurrent = prefs.getString("current", "10");
       String sCapacity = prefs.getString("capacity", "60");
+      int duration;
 
       switch (chargeFor.getValue())
       {
@@ -314,90 +324,59 @@ public class ScheduleViewModel extends AndroidViewModel
       power = Float.parseFloat(sCurrent) * SUPPLY_VOLTAGE / 1000.0F;
       int remainingChargeTime = (int) (60 * chargeToAdd / power);
 
-      switch (chargeWhen.getValue())
+      Calendar currentTime = Calendar.getInstance();
+      Calendar finishTime;
+
+      if (chargeWhen.getValue() == ChargeWhen.ANY_TIME)
       {
-        case ANY_TIME:
+        // OK, we just go flat out regardless of tariff rates
 
-          // OK, we just go flat out regardless of tariff rates
+        chargerOn(getApplication(), true);
+        finishTime = (Calendar) currentTime.clone();
+        finishTime.add(MINUTE, remainingChargeTime);
+        remainingChargeTime = 0;
+      }
+      else
+      {
+        int price = prefs.getInt("PriceLimit", 5);
 
-          chargerOn(getApplication(), true);
-          Calendar finishTime = Calendar.getInstance();
-          finishTime.add(MINUTE, remainingChargeTime);
-          startTimer(getApplication(), finishTime, Action.CHARGER_FINISH, 0);
-          break;
+        // Find start and end time in current half-hour timeslot
 
-        case OFF_PEAK:
+        Calendar startTime = (Calendar) currentTime.clone();
+        startTime.set(SECOND, 0);
+        startTime.set(MILLISECOND, 0);
+        if (startTime.get(MINUTE) > 30)
+          startTime.set(MINUTE, 30);
+        else
+          startTime.set(MINUTE, 0);
+        Calendar endTime = (Calendar) startTime.clone();
+        endTime.add(MINUTE, 30);
 
-          // Get current time and start time of today's off-peak period
+        int remainingTimeslotTime = (int) (endTime.getTimeInMillis() - currentTime.getTimeInMillis()) / MILLISECONDS_IN_MINUTE;
 
-          Calendar currentTime = Calendar.getInstance();
-          Calendar startTime = findOffPeakStartTime(getApplication());
-
-          if (currentTime.before(startTime))
+        if (tariff.isLowRate(startTime, price, rates))
+        {
+          if (remainingChargeTime > remainingTimeslotTime)
           {
-            // We are currently before the start of off-peak: Wait for start time.
-
-            startTimer (getApplication(), startTime, Action.CHARGER_ON, remainingChargeTime);
+            finishTime = endTime;
+            remainingChargeTime -= remainingTimeslotTime;
           }
           else
           {
-            // We are after start time; calculate off-peak end time
-
-            String goDuration = prefs.getString("go_duration", "4");
-            int duration = Integer.parseInt(goDuration);
-            Calendar endTime = (Calendar) startTime.clone();
-            endTime.add(HOUR, duration);
-
-            if (currentTime.before(endTime))
-            {
-              // We're within the off-peak period.  Can start charging immediately.
-              // Find time to end of off-peak
-
-              int remainingOffPeakTime = (int) (endTime.getTimeInMillis() - currentTime.getTimeInMillis()) / MILLISECONDS_IN_MINUTE;
-              if (remainingChargeTime < remainingOffPeakTime)
-              {
-                // We can complete the charge during this off-peak period
-
-                finishTime = startTime;
-                finishTime.add(MINUTE, remainingChargeTime);
-                startTimer(getApplication(), finishTime, Action.CHARGER_FINISH, 0);
-              }
-              else
-              {
-                // Need to charge for the whole off-peak period (less margin for schedule delays)
-
-                remainingChargeTime -= remainingOffPeakTime;
-                endTime.add(MINUTE, -TIME_MARGIN);
-                startTimer(getApplication(), endTime, Action.CHARGER_OFF, remainingChargeTime);
-              }
-
-              // Either way we can start charging now
-
-              chargerOn(getApplication(), true);
-            }
-            else
-            {
-              // We're after the off-peak period for today.  Need to wait for the
-              // start of the next period
-
-              startTime.add(DATE, 1);
-              startTimer(getApplication(), startTime, Action.CHARGER_ON, remainingChargeTime);
-            }
+            finishTime = (Calendar) currentTime.clone();
+            finishTime.add(MINUTE, remainingChargeTime);
+            remainingChargeTime = 0;
           }
-          break;
-
-        default:
-
-          Toast.makeText(getApplication(), "Agile tariff not yet supported", Toast.LENGTH_LONG).show();
-          return;
+          chargerOn(getApplication(), true);
+        }
+        else
+        {
+          finishTime = endTime;
+        }
       }
 
-      // Update state and persist
-
       state.setValue(State.CHARGING);
-      SharedPreferences.Editor editor = prefs.edit();
-      editor.putInt("State", State.CHARGING.ordinal());
-      editor.apply();
+      startTimer (getApplication(), finishTime, remainingChargeTime);
 
       Logger.log(getApplication(),"Charging started");
     }
@@ -435,131 +414,113 @@ public class ScheduleViewModel extends AndroidViewModel
 
   //---------------------------------------------------------------------------
 
-  static void startTimer (Context context, Calendar expiryTime, Action action, int remainingChargeTime)
+  static void startTimer (Context context, Calendar expiryTime, int remainingChargeTime)
   {
     // Start timer for the given duration in minutes
-
-    DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.UK);
-
-    // Get time of next event
-
-    Date d = expiryTime.getTime();
 
     // Update UI if present
 
     if (theInstance != null)
-      theInstance.nextTime.setValue(d);
+      theInstance.nextTime.setValue(expiryTime.getTime());
 
     // Persist the next event details
 
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
     SharedPreferences.Editor editor = prefs.edit();
-    editor.putString("NextTime", df.format(d));
-    editor.putInt("Action", action.ordinal());
+    editor.putInt("State", State.CHARGING.ordinal());
     editor.putInt("RemainingChargeTime", remainingChargeTime);
+    editor.putLong("ExpiryTime", expiryTime.getTimeInMillis());
     editor.apply();
 
-    // Start an alarm to wake the app when next scheduled event is due
+    // Start an alarm to wake the app at given time
 
     AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
     Intent intent = new Intent(context, Scheduler.class);
     PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
-    am.set(AlarmManager.RTC_WAKEUP, expiryTime.getTimeInMillis(), pendingIntent);
-
-    // Log to file
-
-    Logger.log(context,"Starting timer set for " + df.format(d));
+    am.setExact(AlarmManager.RTC_WAKEUP, expiryTime.getTimeInMillis(), pendingIntent);
   }
 
   //---------------------------------------------------------------------------
 
   public static void onTimer(Context context)
   {
+    // Progresses the charging schedule.  Start by retrieving the current rates
+    // if necessary, then passing control to handleTimer
+
+    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+    long ms = prefs.getLong("ExpiryTime", 0);
+    Calendar timeslotTime = Calendar.getInstance();
+    timeslotTime.setTimeInMillis(ms);
+
+    Tariff tariff = Tariff.getTariff(context);
+    assert tariff != null;
+    tariff.getRates(timeslotTime, ScheduleViewModel::handleTimer);
+  }
+
+  //---------------------------------------------------------------------------
+
+  public static void handleTimer(Context context, List<Rates.Result> rates)
+  {
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
     int remainingChargeTime = prefs.getInt("RemainingChargeTime", 0);
-    int ordinal = prefs.getInt("Action", 0);
-    Action action = Action.values()[ordinal];
+    long ms = prefs.getLong("ExpiryTime", 0);
 
-    String goDuration = prefs.getString("go_duration", "4");
-    int duration = Integer.parseInt(goDuration);
     Date d = Calendar.getInstance().getTime();
     DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.UK);
     Logger.log(context, "Timer fired at " + df.format(d));
     Logger.log(context, "Remaining charge time = " + remainingChargeTime);
 
-    Calendar startTime = findOffPeakStartTime(context);
+    Calendar timeslotTime = Calendar.getInstance();
+    timeslotTime.setTimeInMillis(ms);
 
-    switch (action)
+    if (remainingChargeTime > 0)
     {
-      case CHARGER_FINISH:
+      Tariff tariff = Tariff.getTariff(context);
+      assert tariff != null;
+      int price = prefs.getInt("PriceLimit", 5);
 
-        stopCharging(context);
-
-        // Send a notification to indicate that charging is complete
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_charge_complete)
-                .setContentTitle(context.getString(R.string.app_name))
-                .setContentText(context.getString(R.string.charging_complete))
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-        notificationManager.notify(0, builder.build());
-
-        break;
-
-      case CHARGER_ON:
-
-        int remainingOffPeakTime = duration * 60;
-        if (remainingChargeTime < remainingOffPeakTime)
+      if (tariff.isLowRate(timeslotTime, price, rates))
+      {
+        if (remainingChargeTime > 30)
         {
-          // We can complete the charge during this off-peak period
-
-          startTime.add(MINUTE, remainingChargeTime);
-          startTimer(context, startTime, Action.CHARGER_FINISH, 0);
+          timeslotTime.add(MINUTE, 30);
+          remainingChargeTime -= 30;
         }
         else
         {
-          // Need to charge for the whole off-peak period
-
-          startTime.add(MINUTE, remainingOffPeakTime);
-          remainingChargeTime -= remainingOffPeakTime;
-          startTimer(context, startTime, Action.CHARGER_OFF, remainingChargeTime);
+          timeslotTime.add(MINUTE, remainingChargeTime);
+          remainingChargeTime = 0;
         }
-        // Either way we can start charging now
-
         chargerOn(context, true);
-        break;
-
-      case CHARGER_OFF:
-
-        // Turn charger off and wait till next off-peak period
-
-        Calendar now = Calendar.getInstance();
-        if (now.after(startTime))
-          startTime.add(DATE, 1);
-        startTimer(context, startTime, Action.CHARGER_ON, remainingChargeTime);
+      }
+      else
+      {
+        timeslotTime.add(MINUTE, 30);
         chargerOn(context, false);
-        break;
+      }
+
+      startTimer (context, timeslotTime, remainingChargeTime);
     }
-  }
+    else
+    {
+      stopCharging(context);
 
-  //---------------------------------------------------------------------------
+      // Send a notification to indicate that charging is complete
 
-  static Calendar findOffPeakStartTime (Context context)
-  {
-    // Get today's start time
+      Intent intent = new Intent(context, MainActivity.class);
+      intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+      PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+      NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+              .setSmallIcon(R.drawable.ic_charge_complete)
+              .setContentTitle(context.getString(R.string.app_name))
+              .setContentText(context.getString(R.string.charging_complete))
+              .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+              .setContentIntent(pendingIntent)
+              .setAutoCancel(true);
 
-    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-    String goStart = prefs.getString("go_start_time", "00:30");
-    String[] parts = goStart.split(":");
-    int hour = Integer.parseInt(parts[0]);
-    int minute = Integer.parseInt(parts[1]);
-
-    Calendar startTime = Calendar.getInstance();
-    startTime.set(Calendar.HOUR_OF_DAY, hour);
-    startTime.set(Calendar.MINUTE, minute);
-    return startTime;
+      NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+      notificationManager.notify(0, builder.build());
+    }
   }
 }

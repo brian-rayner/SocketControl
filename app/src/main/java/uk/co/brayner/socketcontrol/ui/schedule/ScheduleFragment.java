@@ -20,13 +20,13 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import uk.co.brayner.socketcontrol.R;
+import uk.co.brayner.socketcontrol.Tariff;
 
 public class ScheduleFragment extends Fragment
 {
   static String TAG = "ScheduleFragment";
 
   private ScheduleViewModel scheduleViewModel;
-  private SharedPreferences prefs;
 
   TextView twState;
   TextView twAdd;
@@ -53,7 +53,6 @@ public class ScheduleFragment extends Fragment
                            ViewGroup container, Bundle savedInstanceState)
   {
     scheduleViewModel = new ViewModelProvider(this).get(ScheduleViewModel.class);
-    prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
 
     View root = inflater.inflate(R.layout.fragment_schedule, container, false);
 
@@ -152,9 +151,9 @@ public class ScheduleFragment extends Fragment
     scheduleViewModel.getChargeWhen().observe(getViewLifecycleOwner(), chargeWhen ->
     {
       // Called when the 'charge when' option changes.  Update display accordingly.
-      String tariff = prefs.getString("tariff", "");
 
-      if (chargeWhen == ScheduleViewModel.ChargeWhen.MAX_PRICE && tariff.equals("agile"))
+      Tariff.Type type = Tariff.getType(getContext());
+      if (chargeWhen == ScheduleViewModel.ChargeWhen.MAX_PRICE && type == Tariff.Type.AGILE)
       {
         twPrice.setVisibility(View.VISIBLE);
         etPrice.setVisibility(View.VISIBLE);
@@ -234,21 +233,23 @@ public class ScheduleFragment extends Fragment
 
   private void setChargeOptions()
   {
-    String tariff = prefs.getString("tariff", "");
-    if (tariff.equals("go"))
+    Tariff.Type type = Tariff.getType(getContext());
+    switch (type)
     {
-      rbPrice.setVisibility(View.GONE);
-      rbOffPeak.setVisibility(View.VISIBLE);
-    }
-    else if (tariff.equals("agile"))
-    {
-      rbPrice.setVisibility(View.VISIBLE);
-      rbOffPeak.setVisibility(View.GONE);
-    }
-    else
-    {
-      rbPrice.setVisibility(View.GONE);
-      rbOffPeak.setVisibility(View.GONE);
+      case GO:
+        rbPrice.setVisibility(View.GONE);
+        rbOffPeak.setVisibility(View.VISIBLE);
+        break;
+
+      case AGILE:
+        rbPrice.setVisibility(View.VISIBLE);
+        rbOffPeak.setVisibility(View.GONE);
+        break;
+
+      default:
+        rbPrice.setVisibility(View.GONE);
+        rbOffPeak.setVisibility(View.GONE);
+        break;
     }
   }
 
