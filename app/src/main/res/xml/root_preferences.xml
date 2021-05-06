@@ -1,0 +1,79 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="@string/octopus_header" app:key="octopus">
+
+        <ListPreference
+            app:key="region"
+            app:title="@string/region_title"
+            app:entries="@array/region_entries"
+            app:entryValues="@array/region_values"
+            app:defaultValue="J"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            app:key="tariff"
+            app:title="@string/tariff_title"
+            app:entries="@array/tariff_entries"
+            app:entryValues="@array/tariff_values"
+            app:defaultValue="other"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            app:key="go_duration"
+            app:title="@string/go_duration_title"
+            app:entries="@array/go_duration_entries"
+            app:entryValues="@array/go_duration_values"
+            app:defaultValue="4"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            app:key="go_start_time"
+            app:title="@string/go_start_title"
+            app:entries="@array/go_start_entries"
+            app:entryValues="@array/go_start_values"
+            app:defaultValue="00:30"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/socket_header">
+
+        <EditTextPreference
+            app:key="ip"
+            app:title="@string/ip_title"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            app:key="outlet"
+            app:title="@string/outlet_title"
+            app:entries="@array/outlet_entries"
+            app:entryValues="@array/outlet_values"
+            app:defaultValue="1"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Charger">
+
+        <EditTextPreference
+            app:key="current"
+            app:title="Current (A)"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/car_header">
+
+        <EditTextPreference
+            app:key="mpkwh"
+            app:title="@string/mpkwh_title"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:key="capacity"
+            app:title="@string/capacity_title"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

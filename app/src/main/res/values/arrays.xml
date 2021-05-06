@@ -1,0 +1,99 @@
+<resources>
+    <!-- Tariff setting -->
+    <string-array name="tariff_entries">
+        <item>Agile</item>
+        <item>GO</item>
+        <item>Other</item>
+    </string-array>
+
+    <string-array name="tariff_values">
+        <item>agile</item>
+        <item>go</item>
+        <item>other</item>
+    </string-array>
+
+    <!-- GO duration setting -->
+    <string-array name="go_duration_entries">
+        <item>3 hours</item>
+        <item>4 hours</item>
+        <item>5 hours</item>
+    </string-array>
+
+    <string-array name="go_duration_values">
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+    </string-array>
+
+    <!-- GO start time setting -->
+    <string-array name="go_start_entries">
+        <item>00:30</item>
+        <item>01:30</item>
+        <item>02:30</item>
+        <item>03:30</item>
+        <item>20:30</item>
+        <item>21:30</item>
+        <item>22:30</item>
+        <item>23:30</item>
+    </string-array>
+
+    <string-array name="go_start_values">
+        <item>00:30</item>
+        <item>01:30</item>
+        <item>02:30</item>
+        <item>03:30</item>
+        <item>20:30</item>
+        <item>21:30</item>
+        <item>22:30</item>
+        <item>23:30</item>
+    </string-array>
+
+    <!-- Region setting -->
+    <string-array name="region_entries">
+        <item>Eastern England</item>
+        <item>East Midlands</item>
+        <item>London</item>
+        <item>Merseyside and Northern Wales</item>
+        <item>West Midlands</item>
+        <item>North Eastern England</item>
+        <item>North Western England</item>
+        <item>Southern England</item>
+        <item>South Eastern England</item>
+        <item>Southern Wales</item>
+        <item>South Western England</item>
+        <item>Yorkshire</item>
+        <item>Southern Scotland</item>
+        <item>Northern Scotland</item>
+    </string-array>
+
+    <string-array name="region_values">
+        <item>A</item>
+        <item>B</item>
+        <item>C</item>
+        <item>D</item>
+        <item>E</item>
+        <item>F</item>
+        <item>G</item>
+        <item>H</item>
+        <item>J</item>
+        <item>K</item>
+        <item>L</item>
+        <item>M</item>
+        <item>N</item>
+        <item>P</item>
+    </string-array>
+
+    <!-- Outlet setting -->
+    <string-array name="outlet_entries">
+        <item>Left</item>
+        <item>Right</item>
+    </string-array>
+
+    <string-array name="outlet_values">
+        <item>Left</item>
+        <item>Right</item>
+    </string-array>
+
+
+
+</resources>
